@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>폼 예제</h1>
-    <form>
+    <form method="post">
         아이디:<input type="text" name="t1" value=""><br>
         암 호:<input type="password" name="p1" value=""><br>
         <input type="button" name="b1" value="버튼1"><br>
@@ -23,6 +23,14 @@
         <input type="hidden" name="h1" value="hv1"><br>
         <hr>
         <input type="file" name="f1"><br>
+        좋아하는 과일:
+        <select name="S1">
+            <option value = "SV1">사과</option>
+            <option value = "SV2">배</option>
+            <option value = "SV3">감</option>
+            <option value = "SV4">포도</option>
+        </select><br>
+        <textarea name="ta1" rows="10" cols="50">초기 입력한 텍스트</textarea><br>
         <input type="submit" name="sm" value="전송"><br>
         <input type="reset" name="rs" value="초기화"><br>
        
