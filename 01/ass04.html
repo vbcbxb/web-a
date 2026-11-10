@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function(){
+        let num1 = 0;
+        let num2 = '';
+        let op = '';
+
+        $('.func').click(function(){
+            $('#disp1').val('');
+            $('#disp2').val('');
+            num1 = 0;
+            num2 = '';
+            op = '';
+        });
+
+        $('.num').click(function(){
+            let cur = $('#disp2').val();
+            let n = $(this).val();
+            $('#disp2').val(cur + n);
+
+            if (op != '') {
+                num2 = num2 + n;
+            }
+        });
+
+        $('.op').click(function(){
+            let cur = $('#disp2').val();
+            let opt = $(this).val();
+
+            if (opt != '=') {
+                num1 = Number(cur);
+                op = opt;
+                num2 = ''; 
+                $('#disp2').val(cur + opt);
+            } else {
+                let result = 0;
+
+                if (op == '+') {
+                    result = num1 + Number(num2);
+                } else if (op == '-') {
+                    result = num1 - Number(num2);
+                } else if (op == '*') {
+                    result = num1 * Number(num2);
+                } else if (op == '/') {
+                    result = num1 / Number(num2);
+                }
+
+                $('#disp1').val(cur);
+                $('#disp2').val(result);
+            }
+        });
+    });
+</script>
+<style>
+    h1 { text-align: center; }
+    .disp { width: 200px; height: 40px; margin-top: 3px; }
+    .disp { font-family: "Oxanium", sans-serif; font-size: 22pt; text-align: right; }
+    input[type=button] { width: 50px; height: 50px; text-align: center; vertical-align: middle; margin: 3px; }
+    #calc { width: 220px; margin-left: auto; margin-right: auto; }
+</style>
+<body>
+    <h1>계산기</h1>
+    <div id="calc">
+        <div>
+            <input type="text" class="disp" id="disp1" readonly>
+            <input type="text" class="disp" id="disp2" readonly>
+        </div>
+        <input type="button" class="num" value="7">
+        <input type="button" class="num" value="8">
+        <input type="button" class="num" value="9">
+        <input type="button" class="op" value="+"><br>
+        <input type="button" class="num" value="4">
+        <input type="button" class="num" value="5">
+        <input type="button" class="num" value="6">
+        <input type="button" class="op" value="-"><br>
+        <input type="button" class="num" value="1">
+        <input type="button" class="num" value="2">
+        <input type="button" class="num" value="3">
+        <input type="button" class="op" value="*"><br>
+        <input type="button" class="func" value="AC">
+        <input type="button" class="num" value="0">
+        <input type="button" class="op" value="=">
+        <input type="button" class="op" value="/">
+    </div>
+</body>
+</html>

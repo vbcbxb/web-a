@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>계산기</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: #f4f3ee;
+            color: #233b34;
+            font-family: Arial, "Malgun Gothic", sans-serif;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        .calculator,
+        .history {
+            padding: 24px;
+            border: 1px solid #dfe5dc;
+            border-radius: 20px;
+            background: white;
+        }
+
+        .display {
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 14px;
+            background: #edf3ed;
+        }
+
+        .display label {
+            font-size: 13px;
+            color: #65796b;
+        }
+
+        #previous {
+            min-height: 24px;
+            margin-top: 15px;
+            text-align: right;
+            color: #65796b;
+            overflow-wrap: anywhere;
+        }
+
+        #expression {
+            width: 100%;
+            padding: 10px 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #233b34;
+            font-size: 32px;
+            text-align: right;
+        }
+
+        #expression:focus {
+            box-shadow: 0 2px #83a18b;
+        }
+
+        #message {
+            min-height: 36px;
+            margin-top: 8px;
+            color: #65796b;
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: right;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .buttons button {
+            height: 58px;
+            border: 1px solid #e0e5dc;
+            border-radius: 12px;
+            background: #f8f9f5;
+            color: #233b34;
+            font-size: 22px;
+        }
+
+        .buttons button:hover {
+            background: #e8eee4;
+        }
+
+        .buttons .function {
+            background: #edf0e8;
+            font-size: 17px;
+        }
+
+        .buttons .operator {
+            background: #e4eee5;
+        }
+
+        .buttons .zero {
+            grid-column: span 2;
+        }
+
+        .buttons .equals {
+            grid-column: span 4;
+            background: #245b48;
+            color: white;
+        }
+
+        .buttons .equals:hover {
+            background: #184331;
+        }
+
+        .keyboard-guide {
+            margin: 18px 0 0;
+            color: #737d76;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .history-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        #history-count {
+            color: #737d76;
+            font-size: 13px;
+        }
+
+        #clear-history {
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: #65796b;
+        }
+
+        .history-description {
+            color: #737d76;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        #history-list {
+            max-height: 460px;
+            margin-top: 20px;
+            overflow-y: auto;
+        }
+
+        .empty {
+            padding: 50px 0;
+            color: #849087;
+            text-align: center;
+        }
+
+        .history-item {
+            display: block;
+            width: 100%;
+            padding: 18px 5px;
+            border: none;
+            border-bottom: 1px solid #dfe5dc;
+            background: transparent;
+            text-align: right;
+        }
+
+        .history-item:hover {
+            background: #f4f7f1;
+        }
+
+        .history-expression {
+            display: block;
+            color: #737d76;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .history-result {
+            display: block;
+            margin-top: 8px;
+            color: #233b34;
+            font-size: 25px;
+            overflow-wrap: anywhere;
+        }
+
+        button:focus-visible {
+            outline: 3px solid #83a18b;
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .calculator,
+            .history {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <section class="calculator" aria-label="계산기">
+            <form id="calculator-form">
+                <div class="display">
+                    <label for="expression">계산할 수식</label>
+
+                    <div id="previous"></div>
+
+                    <input
+                        type="text"
+                        id="expression"
+                        placeholder="0"
+                        maxlength="200"
+                        autocomplete="off"
+                        spellcheck="false"
+                        inputmode="decimal"
+                        aria-describedby="message"
+                    >
+
+                    <div id="message" role="status" aria-live="polite">
+                        괄호와 소수를 사용할 수 있어요.
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button type="button" class="function" data-action="clear">AC</button>
+                    <button type="button" class="function" data-value="(">(</button>
+                    <button type="button" class="function" data-value=")">)</button>
+                    <button type="button" class="function" data-action="delete"
+                        aria-label="한 글자 삭제">⌫</button>
+
+                    <button type="button" data-value="7">7</button>
+                    <button type="button" data-value="8">8</button>
+                    <button type="button" data-value="9">9</button>
+                    <button type="button" class="operator" data-value="/"
+                        aria-label="나누기">÷</button>
+
+                    <button type="button" data-value="4">4</button>
+                    <button type="button" data-value="5">5</button>
+                    <button type="button" data-value="6">6</button>
+                    <button type="button" class="operator" data-value="*"
+                        aria-label="곱하기">×</button>
+
+                    <button type="button" data-value="1">1</button>
+                    <button type="button" data-value="2">2</button>
+                    <button type="button" data-value="3">3</button>
+                    <button type="button" class="operator" data-value="-"
+                        aria-label="빼기">−</button>
+
+                    <button type="button" class="zero" data-value="0">0</button>
+                    <button type="button" data-value=".">.</button>
+                    <button type="button" class="operator" data-value="+"
+                        aria-label="더하기">+</button>
+
+                    <button type="button" class="equals" data-action="calculate">=</button>
+                </div>
+            </form>
+
+            <p class="keyboard-guide">
+                Enter 계산 · Esc 초기화 · Backspace 삭제
+            </p>
+        </section>
+
+        <aside class="history">
+            <div class="history-header">
+                <h2>
+                    계산 기록
+                    <span id="history-count">0</span>
+                </h2>
+
+                <button type="button" id="clear-history">전체 삭제</button>
+            </div>
+
+            <p class="history-description">
+                최근 20개의 계산이 이 브라우저에 저장됩니다.<br>
+                결과를 누르면 다음 계산에 사용할 수 있습니다.
+            </p>
+
+            <div id="history-list"></div>
+        </aside>
+    </main>
+
+    <script>
+        const expressionInput = document.getElementById('expression');
+        const previousDisplay = document.getElementById('previous');
+        const message = document.getElementById('message');
+        const historyList = document.getElementById('history-list');
+        const historyCount = document.getElementById('history-count');
+
+        const storageKey = 'calculation-note-v1';
+
+        let historyItems = [];
+        let finished = false;
+
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem(storageKey) || '[]'
+            );
+
+            if (Array.isArray(saved)) {
+                historyItems = saved.filter(function(item) {
+                    return item &&
+                        typeof item.expression === 'string' &&
+                        typeof item.result === 'number' &&
+                        Number.isFinite(item.result);
+                }).slice(0, 20);
+            }
+        } catch {
+            historyItems = [];
+        }
+
+        function calculateExpression(source) {
+            const text = source
+                .replace(/\s+/g, '')
+                .replace(/×/g, '*')
+                .replace(/÷/g, '/')
+                .replace(/−/g, '-');
+
+            if (text === '') {
+                throw new Error('계산할 수식을 입력해 주세요.');
+            }
+
+            if (text.length > 200) {
+                throw new Error('수식은 200자 이내로 입력해 주세요.');
+            }
+
+            let position = 0;
+
+            function readSum() {
+                let value = readProduct();
+
+                while (text[position] === '+' || text[position] === '-') {
+                    const operator = text[position];
+                    position++;
+
+                    const right = readProduct();
+
+                    if (operator === '+') {
+                        value = value + right;
+                    } else {
+                        value = value - right;
+                    }
+                }
+
+                return value;
+            }
+
+            function readProduct() {
+                let value = readSign();
+
+                while (text[position] === '*' || text[position] === '/') {
+                    const operator = text[position];
+                    position++;
+
+                    const right = readSign();
+
+                    if (operator === '*') {
+                        value = value * right;
+                    } else {
+                        if (right === 0) {
+                            throw new Error('0으로 나눌 수 없습니다.');
+                        }
+
+                        value = value / right;
+                    }
+                }
+
+                return value;
+            }
+
+            function readSign() {
+                if (text[position] === '+') {
+                    position++;
+                    return readSign();
+                }
+
+                if (text[position] === '-') {
+                    position++;
+                    return -readSign();
+                }
+
+                return readNumber();
+            }
+
+            function readNumber() {
+                if (text[position] === '(') {
+                    position++;
+
+                    const value = readSum();
+
+                    if (text[position] !== ')') {
+                        throw new Error('괄호의 짝을 확인해 주세요.');
+                    }
+
+                    position++;
+                    return value;
+                }
+
+                const remaining = text.slice(position);
+                const matched = remaining.match(
+                    /^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/
+                );
+
+                if (!matched) {
+                    throw new Error('숫자와 연산자의 위치를 확인해 주세요.');
+                }
+
+                position = position + matched[0].length;
+
+                return Number(matched[0]);
+            }
+
+            const result = readSum();
+
+            if (position !== text.length) {
+                throw new Error(
+                    '수식을 확인해 주세요. 곱셈은 × 또는 *로 입력해 주세요.'
+                );
+            }
+
+            if (!Number.isFinite(result)) {
+                throw new Error('계산 가능한 숫자 범위를 넘었습니다.');
+            }
+
+            return Number(result.toPrecision(12));
+        }
+
+        function saveHistory() {
+            try {
+                localStorage.setItem(
+                    storageKey,
+                    JSON.stringify(historyItems)
+                );
+            } catch {
+                message.textContent =
+                    '이 브라우저에서는 계산 기록을 저장할 수 없습니다.';
+            }
+        }
+
+        function showHistory() {
+            historyList.replaceChildren();
+            historyCount.textContent = historyItems.length;
+
+            if (historyItems.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'empty';
+                empty.textContent = '아직 계산 기록이 없습니다.';
+                historyList.appendChild(empty);
+                return;
+            }
+
+            historyItems.forEach(function(item) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'history-item';
+                button.title = '이 결과로 계산하기';
+
+                const expression = document.createElement('span');
+                expression.className = 'history-expression';
+                expression.textContent = item.expression + ' =';
+
+                const result = document.createElement('strong');
+                result.className = 'history-result';
+                result.textContent = item.result;
+
+                button.appendChild(expression);
+                button.appendChild(result);
+
+                button.addEventListener('click', function() {
+                    expressionInput.value = String(item.result);
+                    previousDisplay.textContent = item.expression + ' =';
+                    message.textContent = '계산 결과를 불러왔습니다.';
+                    finished = true;
+                });
+
+                historyList.appendChild(button);
+            });
+        }
+
+        function clearInput() {
+            expressionInput.value = '';
+            previousDisplay.textContent = '';
+            message.textContent = '괄호와 소수를 사용할 수 있어요.';
+            finished = false;
+        }
+
+        function deleteLastCharacter() {
+            expressionInput.value = expressionInput.value.slice(0, -1);
+            message.textContent = '';
+            finished = false;
+        }
+
+        function appendValue(value) {
+            const isOperator = ['+', '-', '*', '/'].includes(value);
+
+            if (finished && !isOperator) {
+                expressionInput.value = '';
+                previousDisplay.textContent = '';
+            }
+
+            finished = false;
+
+            if (expressionInput.value.length < 200) {
+                expressionInput.value += value;
+            }
+
+            message.textContent = 'Enter 또는 = 버튼으로 계산하세요.';
+        }
+
+        function runCalculation() {
+            try {
+                const expression = expressionInput.value;
+                const result = calculateExpression(expression);
+
+                previousDisplay.textContent = expression + ' =';
+                expressionInput.value = String(result);
+                message.textContent = '계산 완료';
+                finished = true;
+
+                historyItems.unshift({
+                    expression: expression,
+                    result: result
+                });
+
+                historyItems = historyItems.slice(0, 20);
+
+                saveHistory();
+                showHistory();
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        }
+
+        document.querySelector('.buttons').addEventListener(
+            'click',
+            function(event) {
+                const button = event.target.closest('button');
+
+                if (!button) {
+                    return;
+                }
+
+                const value = button.dataset.value;
+                const action = button.dataset.action;
+
+                if (value !== undefined) {
+                    appendValue(value);
+                } else if (action === 'clear') {
+                    clearInput();
+                } else if (action === 'delete') {
+                    deleteLastCharacter();
+                } else if (action === 'calculate') {
+                    runCalculation();
+                }
+            }
+        );
+
+        document.getElementById('calculator-form').addEventListener(
+            'submit',
+            function(event) {
+                event.preventDefault();
+                runCalculation();
+            }
+        );
+
+        expressionInput.addEventListener('input', function() {
+            finished = false;
+            message.textContent = 'Enter 또는 = 버튼으로 계산하세요.';
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (
+                event.ctrlKey ||
+                event.metaKey ||
+                event.altKey ||
+                event.isComposing
+            ) {
+                return;
+            }
+
+            if (event.key === 'Enter' || event.key === '=') {
+                event.preventDefault();
+                runCalculation();
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                clearInput();
+                return;
+            }
+
+            if (event.target === expressionInput) {
+                if (finished && /^[0-9.(]$/.test(event.key)) {
+                    expressionInput.value = '';
+                    previousDisplay.textContent = '';
+                    finished = false;
+                }
+
+                return;
+            }
+
+            if (/^[0-9.+\-*/()]$/.test(event.key)) {
+                event.preventDefault();
+                appendValue(event.key);
+            } else if (event.key === 'Backspace') {
+                event.preventDefault();
+                deleteLastCharacter();
+            }
+        });
+
+        document.getElementById('clear-history').addEventListener(
+            'click',
+            function() {
+                historyItems = [];
+                saveHistory();
+                showHistory();
+            }
+        );
+
+        showHistory();
+    </script>
+</body>
+</html>
